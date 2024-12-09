@@ -9,7 +9,7 @@ const app = express();
 app.use(cors({ origin: '*' }));
 
 // Initialize Firebase Admin SDK
-const serviceAccount = require('./serviceAccountKey.json');
+const serviceAccount = require('./serviceAccountKey.json'); // Replace with your service account key file
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
@@ -17,19 +17,25 @@ admin.initializeApp({
 // Define your API endpoint
 app.post('/generateToken', async (req, res) => {
   try {
-    const { uid, email } = req.body; // Get user data from request body
+    // 1. Validate Request Body:
+    if (!req.body.uid || !req.body.email) {
+      return res.status(400).json({ error: 'Missing uid or email in request' });
+    }
 
-    // Create a custom token
+    const { uid, email } = req.body; // Destructure after validation
+
+    // 2. Create a custom token:
     const token = await admin.auth().createCustomToken(uid, {
       email: email,
     });
 
-    // Set token expiration (optional)
+    // 3. Set token expiration (optional):
     const expiration = 60 * 60 * 24; // 1 day in seconds
     const jwtToken = jwt.sign({ uid, email }, process.env.JWT_SECRET, {
       expiresIn: expiration,
     });
 
+    // 4. Send the token as a response:
     res.json({ token: jwtToken });
   } catch (error) {
     console.error(error);
