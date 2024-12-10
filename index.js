@@ -8,11 +8,16 @@ const app = express();
 // Enable CORS for all origins (adjust as needed)
 app.use(cors({ origin: '*' }));
 
-// Initialize Firebase Admin SDK
-const serviceAccount = require('./serviceAccountKey.json'); // Replace with your service account key file
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+// Initialize Firebase Admin SDK with proper error handling
+try {
+  const serviceAccount = require('./serviceAccountKey.json'); // Replace with your service account key file
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+} catch (error) {
+  console.error('Error initializing Firebase Admin:', error);
+  process.exit(1); // Exit on error
+}
 
 // Define your API endpoint
 app.post('/generateToken', async (req, res) => {
@@ -22,7 +27,8 @@ app.post('/generateToken', async (req, res) => {
       return res.status(400).json({ error: 'Missing uid or email in request' });
     }
 
-    const { uid, email } = req.body; // Destructure after validation
+    // Destructure after validation to ensure uid is defined
+    const { uid, email } = req.body;
 
     // 2. Create a custom token:
     const token = await admin.auth().createCustomToken(uid, {
